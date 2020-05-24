@@ -97,3 +97,25 @@ plot_layout = go.Layout(title = 'Sales Prediction')
 fig = go.Figure(data = plot_data, layout = plot_layout)
 po.iplot(fig)
 
+
+
+
+###SKU Correlation Heatmap
+
+import pymysql
+import pandas as pd
+from sqlalchemy import create_engine
+import matplotlib.pyplot as plt
+%matplotlib inline
+import seaborn as sns
+import numpy as np
+
+connection_string = 'mysql+pymysql://datathon_team1:mR}Aw7W@34.227.65.68/datathon'
+connec = create_engine(connection_string)
+df = pd.read_sql('SELECT * FROM retail_uk_ecom LIMIT 1000', con = connec)
+df.info()
+
+dummy = pd.get_dummies(df['SKU'])
+dummy['transaction_number'] = df['transaction_number']
+CORRELATION_MATRIX_BASKET = dummy.groupby('transaction_number').sum().corr()
+sns.heatmap(CORRELATION_MATRIX_BASKET,, vmin = 0.4, vmax = 0.99, cmap = 'Blues')
