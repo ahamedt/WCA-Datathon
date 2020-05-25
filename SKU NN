@@ -14,14 +14,14 @@ import sklearn
 import pymysql
 from sqlalchemy import create_engine
 
-connection_string = 'mysql+pymysql://datathon_team1:mR}Aw7W@34.227.65.68/datathon'
+connection_string = "THIS STRING HELD THE CONNECTION TO THE SERVER FOR SQL QUERIES"
 connec = create_engine(connection_string)
 
 df = pd.read_sql('SELECT * FROM retail_uk_ecom LIMIT 100000', con = connec)
 df.info()
 
 
-
+##General Data Selection/Cleaning: Only want date of sale and aggregate amount sold.
 df['sales_date'] = pd.to_datetime(df['sales_date'])
 df['items_quantity'] = pd.to_numeric(df['items_quantity'])
 SALES_EVERYDAY =  pd.DataFrame(df.groupby('sales_date')['items_quantity'].sum())
@@ -39,6 +39,8 @@ for x in range(1,30):
     SUPERVISED[extra_col] = SUPERVISED['del'].shift(x)
 
 SUPERVISED = SUPERVISED.dropna().reset_index(drop = True)
+
+##Setting Test and Training Samples. Lookback period was chosen to be past 30 days.
 
 from sklearn.preprocessing import MinMaxScaler
 modeldf = SUPERVISED.drop(['items_quantity','sales_date'], axis = 1)
@@ -58,6 +60,8 @@ x_train = x_train.reshape(x_train.shape[0],1,x_train.shape[1])
 x_test , y_test = test_scaled[:,1:], test_scaled[:,0:1]
 x_test = x_test.reshape(x_test.shape[0], 1,x_test.shape[1])
 
+##Creation of Sequential Model LSTM Neural Network with one dense layer
+
 model = Sequential()
 model.add(LSTM(4,batch_input_shape= (1,x_train.shape[1],x_train.shape[2]), stateful = True))
 model.add(Dense(1))
@@ -66,6 +70,7 @@ model.fit(x_train, y_train, batch_size = 1, shuffle= False, epochs = 100)
 
 preds = model.predict(x_test,batch_size = 1)
 
+##Reconstructing predictuions into interpretable sales data by inverse transform.
 preds = preds.reshape(30,1,1)
 rebuilt_test =[]
 for x in range(0,30):
@@ -85,6 +90,9 @@ while y < len(rebuilt_test_inv):
     results.append(temp_dict)
     y+=1   
 resultdf = pd.DataFrame(results)
+
+##Plotting the Data
+
 
 import plotly.offline as po 
 import plotly.graph_objs as graph
